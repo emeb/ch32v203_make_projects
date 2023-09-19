@@ -54,12 +54,13 @@ needs.
 ## Supporting other parts
 This repository targets the CH32V203 family of parts only. To set up a similar
 `make` flow for other WCH RISC-V MCUs you'll need to do the following:
-	* Extract the template for your desired family. The templates are found in
-	the Mounriver IDE installation, in the path `MRS_Community/template/wizard/WCH/RISC-V/`
-	and lower level directories per each family. Within those are directories
-	called `NoneOS` which are for simple bare-metal make-based builds, and these
-	also contain zipfiles for all variants within the family.
-	* Create a project directory. Copy files from the template `User`, `Debug` and
-	`Ld` directories. Copy the `Makefile` from this repository and modify it as
-	needed to use the files from the new family template.
+
+* Extract the template for your desired family. The templates are found in
+the Mounriver IDE installation, in the path `MRS_Community/template/wizard/WCH/RISC-V/`
+and lower level directories per each family. Within those are directories
+called `NoneOS` which are for simple bare-metal make-based builds, and these
+also contain zipfiles for all variants within the family.
+* Create a project directory. Copy files from the template `User`, `Debug` and
+`Ld` directories. Copy the `Makefile` from this repository and modify it as
+needed to use the files from the new family template.
 
