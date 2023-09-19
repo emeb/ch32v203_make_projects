@@ -20,8 +20,10 @@ First clone the Github repo:
 git clone https://github.com/emeb/ch32v203_make_projects.git
 ```
 
-Then modify the Makefile to point to the location of your toolchain installation
+Then modify the `blink/Makefile` to point to the location of your toolchain installation
 from above. Find the TOOLS line and insert the proper path.
+```
+TOOLS = <your tool path here>
 ```
 
 ## Organization
