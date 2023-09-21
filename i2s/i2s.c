@@ -34,7 +34,7 @@ void i2s_init(void)
 	
 	/* Set up I2S output pins */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -48,6 +48,7 @@ void i2s_init(void)
 #endif
 	
 	/* set up I2S */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
 	I2S_InitStructure =
 	(I2S_InitTypeDef){
 		.I2S_Mode = I2S_Mode_MasterTx,

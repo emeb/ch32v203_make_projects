@@ -65,6 +65,27 @@ int main(void)
     GPIO_Toggle_INIT();
     printf("LED GPIO initialized\r\n");
 	
+#if 1
+#if 0
+	/* test if SPI2 I2SCFGR works */
+	printf("I2SCFGR = 0x%08X\n\r", SPI2->I2SCFGR);
+	printf("Enable I2S\n\r");
+	//I2S_Cmd(SPI2, ENABLE);
+	SPI2->I2SCFGR = SPI_I2SCFGR_I2SMOD;
+	printf("I2SCFGR = 0x%08X\n\r", SPI2->I2SCFGR);
+#else
+	/* test if writing SPI2 reg works */
+#define SPI2REG I2SCFGR
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+	printf("SPI2REG = 0x%08X\n\r", SPI2->SPI2REG);
+	printf("Write SPI2REG\n\r");
+	SPI2->SPI2REG = 0xDEADBEEF;
+	printf("SPI2REG = 0x%08X\n\r", SPI2->SPI2REG);
+#endif
+
+	printf("Done\n\r");
+	while(1);
+#else
 	i2s_init();
     printf("I2S initialized\r\n");
 	
@@ -72,7 +93,17 @@ int main(void)
     {
     	Delay_Ms( 100 );
         GPIO_WriteBit(GPIOA, GPIO_Pin_0, (count & 1) ? Bit_SET : Bit_RESET);
-    	//printf("count = %d\r\n", count);
+    	printf("%6d : ", count);
+    	//printf("0x%08X ", osc_phs[0]);
+    	//printf("0x%08X ", osc_phs[1]);
+    	printf("0x%08X ", SPI2->CTLR1);
+    	printf("0x%08X ", SPI2->CTLR2);
+    	printf("0x%08X ", SPI2->I2SCFGR);
+    	printf("0x%08X ", SPI2->STATR);
+    	//printf("0x%08X ", DMA1_Channel5->MADDR);
+    	//printf("0x%08X ", DMA1_Channel5->CNTR);
+    	printf("\n\r");
         count++;
     }
+#endif
 }

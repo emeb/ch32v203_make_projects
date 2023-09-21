@@ -7,6 +7,8 @@
 
 #include "ch32v20x.h"
 
+extern uint32_t osc_phs[2], osc_frq[2];
+
 void i2s_init(void);
 
 #endif
