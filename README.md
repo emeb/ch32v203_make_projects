@@ -20,7 +20,7 @@ First clone the Github repo:
 git clone https://github.com/emeb/ch32v203_make_projects.git
 ```
 
-Then modify the `blink/Makefile` to point to the location of your toolchain installation
+Then modify the `misc/makefile.mk` to point to the location of your toolchain installation
 from above. Find the TOOLS line and insert the proper path.
 ```
 TOOLS = <your tool path here>
@@ -41,15 +41,15 @@ Create a new directory and copy the following files from the original `blink`
 project:
 ```
 Makefile
-openocd_ch32.cfg
-CH32V203x8.ld
 system_ch32v20x.c
 system_ch32v20x.h
 ch32v20x_conf.h
 ```
-Add your own `main.c` and any other source files. Modify the Makefile to add
-all your own sources and add / remove any peripheral driver files your project
-needs.
+Add your own `main.c` (or start with the one in the `blink` project) and any
+other source files. Modify the Makefile to add all your own sources and add /
+remove any peripheral driver files your project	needs. If you need to modify
+the linker script or any of the compiler flags then you'll need to create your
+own in the new project directory.
 
 ## Supporting other parts
 This repository targets the CH32V203 family of parts only. To set up a similar
