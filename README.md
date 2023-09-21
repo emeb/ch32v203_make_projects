@@ -38,23 +38,17 @@ libraries.
 * Startup - CH32V203 C startup code
 * blink - simple GPIO and USART example. Can be used as template for new projects
 * adc - ADC + DMA example
+* i2s - I2S + DMA output example
 
 ## Building
 Change directory to the project you wish to build and run `make`. To program a
 device connect the WCH-Linke programmer and run `make flash`.
 
 ## Adding projects
-Create a new directory and copy the following files from the original `blink`
-project:
-```
-Makefile
-system_ch32v20x.c
-system_ch32v20x.h
-ch32v20x_conf.h
-```
-Add your own `main.c` (or start with the one in the `blink` project) and any
-other source files. Modify the Makefile to add all your own sources and add /
-remove any peripheral driver files your project	needs. If you need to modify
+Create a new directory and copy the `Makefile` from the original `blink`
+project and add your own `main.c` (or start with the one in the `blink` project)
+plus any other source files. Modify the Makefile to add all your own sources and
+add / remove any peripheral driver files your project needs. If you need to modify
 the linker script or any of the compiler flags then you'll need to create your
 own in the new project directory.
 
