@@ -20,17 +20,24 @@ First clone the Github repo:
 git clone https://github.com/emeb/ch32v203_make_projects.git
 ```
 
-Then modify the `misc/makefile.mk` to point to the location of your toolchain installation
-from above. Find the TOOLS line and insert the proper path.
+Then modify the `misc/makefile.mk` to point to the location of your toolchain
+installation from above. Find the TOOLS line and insert the proper path.
 ```
 TOOLS = <your tool path here>
 ```
 
 ## Organization
 The repository is organized with subdirectories containing projects and common
-code. Each project directory will have its own Makefile, linker script, debugger script
-and source code. Common directories contain the WCH startup code and peripheral
+code. Each project directory will have its own Makefile and source code. Common
+directories contain the common build scripts, WCH startup code and peripheral
 libraries.
+
+* Core - common RISC-V definitions and code.
+* misc - common make definitions, linker script and debugger configuration
+* Peripheral - WCH Peripheral library code and includes
+* Startup - CH32V203 C startup code
+* blink - simple GPIO and USART example. Can be used as template for new projects
+* adc - ADC + DMA example
 
 ## Building
 Change directory to the project you wish to build and run `make`. To program a
