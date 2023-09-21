@@ -1,0 +1,8 @@
+# gitignore for ch32v203_make_projects
+*.o
+*.map
+*.lst
+*.bin
+*.dmp
+*.elf
+*.dis

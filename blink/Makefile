@@ -9,5 +9,11 @@ OBJECTS =   startup_ch32v20x_D8.o core_riscv.o main.o debug.o \
 			system_ch32v20x.o ch32v20x_it.o ch32v20x_misc.o \
 			ch32v20x_pwr.o ch32v20x_rcc.o ch32v20x_gpio.o ch32v20x_usart.o
 			
+# Optional Linker script override
+#LDSCRIPT = ../misc/CH32V203x8.ld
+
+# Optional Optimization level override
+#COPT = -O3
+
 include ../misc/makefile.mk
 

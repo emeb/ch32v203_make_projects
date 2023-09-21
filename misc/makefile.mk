@@ -1,11 +1,14 @@
 # Make includes for CH32V203
 # 09-20-2023 E. Brombaugh
 
-# Linker script
-LDSCRIPT = ../misc/CH32V203x8.ld
+# Linker script - can be overridden
+LDSCRIPT ?= ../misc/CH32V203x8.ld
+
+# Optimization level - can be overridden
+COPT ?= -Os
 
 # Compiler Flags
-CFLAGS  = -Wall -Os -ffreestanding -flto -nostartfiles -fomit-frame-pointer
+CFLAGS  = $(COPT) -Wall -ffreestanding -flto -nostartfiles -fomit-frame-pointer
 CFLAGS += -I. -I../Peripheral/inc -I../Core -I../Startup
 CFLAGS += -march=rv32i -mabi=ilp32 
 AFLAGS  = -march=rv32i -mabi=ilp32 
