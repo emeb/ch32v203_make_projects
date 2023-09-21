@@ -54,8 +54,8 @@ void spi_dac_init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 #endif
-	
-#if 0
+
+#if 1
 	/* set up SPI port */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
 	SPI_InitStructure =
@@ -71,9 +71,21 @@ void spi_dac_init(void)
 	};
 	SPI_Init(SPI1, &SPI_InitStructure);
 	SPI_Cmd(SPI1, ENABLE);
-	
+#else
+	// Configure SPI 
+	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
+	SPI1->CTLR1 = 
+		SPI_NSS_Soft | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_16b |
+		SPI_Mode_Master | SPI_Direction_1Line_Tx |
+		SPI_BaudRatePrescaler_16;
+
+	// enable SPI port
+	SPI1->CTLR1 |= SPI_CTLR1_SPE;
+#endif
+
+#if 1
 	/* set up TIM1 as timebase for WS and SPI TX */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 	TIM_TimeBaseInitStructure =
 	(TIM_TimeBaseInitTypeDef){
 		.TIM_Prescaler = 3,		// for 144MHz -> 48MHz
@@ -103,42 +115,7 @@ void spi_dac_init(void)
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
 	TIM_DMACmd(TIM1, TIM_DMA_CC4, ENABLE);
 	TIM_Cmd(TIM1, ENABLE);
-
-	/* set up DMA */
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
-	DMA_InitStructure = 
-	(DMA_InitTypeDef){
-		.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DATAR,
-		.DMA_MemoryBaseAddr = (uint32_t)spi_dac_buffer,
-		.DMA_DIR = DMA_DIR_PeripheralDST,
-		.DMA_BufferSize = SPIDACBUFSZ,
-		.DMA_PeripheralInc = DMA_PeripheralInc_Disable,
-		.DMA_MemoryInc = DMA_MemoryInc_Enable,
-		.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord,
-		.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord,
-		.DMA_Mode = DMA_Mode_Circular,
-		.DMA_Priority = DMA_Priority_Medium,
-		.DMA_M2M = DMA_M2M_Disable,
-	};
-	DMA_Init(DMA1_Channel4, &DMA_InitStructure);
-	
-	/* set up DMA IRQ */
-	DMA_ITConfig(DMA1_Channel4, DMA_IT_TC | DMA_IT_HT, ENABLE);
-	NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-	
-	/* Start it all up */
-	DMA_Cmd(DMA1_Channel4, ENABLE);
 #else
-	// Configure SPI 
-	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
-	SPI1->CTLR1 = 
-		SPI_NSS_Soft | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_16b |
-		SPI_Mode_Master | SPI_Direction_1Line_Tx |
-		SPI_BaudRatePrescaler_16;
-
-	// enable SPI port
-	SPI1->CTLR1 |= SPI_CTLR1_SPE;
-
 	// TIM1 generates DMA Req and external signal
 	// Enable TIM1
 	RCC->APB2PCENR |= RCC_APB2Periph_TIM1;
@@ -178,7 +155,34 @@ void spi_dac_init(void)
 	
 	// Enable TIM1
 	TIM1->CTLR1 |= TIM_CEN;
-
+#endif
+	
+#if 1
+	/* set up DMA */
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+	DMA_InitStructure = 
+	(DMA_InitTypeDef){
+		.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DATAR,
+		.DMA_MemoryBaseAddr = (uint32_t)spi_dac_buffer,
+		.DMA_DIR = DMA_DIR_PeripheralDST,
+		.DMA_BufferSize = SPIDACBUFSZ,
+		.DMA_PeripheralInc = DMA_PeripheralInc_Disable,
+		.DMA_MemoryInc = DMA_MemoryInc_Enable,
+		.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord,
+		.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord,
+		.DMA_Mode = DMA_Mode_Circular,
+		.DMA_Priority = DMA_Priority_Medium,
+		.DMA_M2M = DMA_M2M_Disable,
+	};
+	DMA_Init(DMA1_Channel4, &DMA_InitStructure);
+	
+	/* set up DMA IRQ */
+	DMA_ITConfig(DMA1_Channel4, DMA_IT_TC | DMA_IT_HT, ENABLE);
+	NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+	
+	/* Start it all up */
+	DMA_Cmd(DMA1_Channel4, ENABLE);
+#else
 	//DMA1_Channel4 is for TIM1CH4 
 	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
 	DMA1_Channel4->PADDR = (uint32_t)&SPI1->DATAR;
