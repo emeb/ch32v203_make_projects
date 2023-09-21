@@ -41,6 +41,12 @@ void spi_dac_init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
+	/* GPIO A11 50MHz Push-Pull for WS from TIM1 CH4 */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
 #ifdef SPI_DAC_DIAG
 	// GPIO A4 50MHz Push-Pull for diags
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
@@ -49,6 +55,7 @@ void spi_dac_init(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 #endif
 	
+#if 0
 	/* set up SPI port */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
 	SPI_InitStructure =
@@ -64,12 +71,6 @@ void spi_dac_init(void)
 	};
 	SPI_Init(SPI1, &SPI_InitStructure);
 	SPI_Cmd(SPI1, ENABLE);
-	
-	/* GPIO A11 50MHz Push-Pull for WS from TIM1 CH4 */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	/* set up TIM1 as timebase for WS and SPI TX */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
@@ -127,6 +128,75 @@ void spi_dac_init(void)
 	
 	/* Start it all up */
 	DMA_Cmd(DMA1_Channel4, ENABLE);
+#else
+	// Configure SPI 
+	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
+	SPI1->CTLR1 = 
+		SPI_NSS_Soft | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_16b |
+		SPI_Mode_Master | SPI_Direction_1Line_Tx |
+		SPI_BaudRatePrescaler_16;
+
+	// enable SPI port
+	SPI1->CTLR1 |= SPI_CTLR1_SPE;
+
+	// TIM1 generates DMA Req and external signal
+	// Enable TIM1
+	RCC->APB2PCENR |= RCC_APB2Periph_TIM1;
+	
+	// Reset TIM1 to init all regs
+	RCC->APB2PRSTR |= RCC_APB2Periph_TIM1;
+	RCC->APB2PRSTR &= ~RCC_APB2Periph_TIM1;
+	
+	// CTLR1: default is up, events generated, edge align
+	// CTLR1: up/down, events on both edges
+	TIM1->CTLR1 = TIM_CMS;
+	// SMCFGR: default clk input is CK_INT
+	
+	// Prescaler 
+	TIM1->PSC = 0x0000;
+	
+	// Auto Reload - sets period to ~47kHz
+	TIM1->ATRLR = 499;
+	
+	// Reload immediately
+	TIM1->SWEVGR |= TIM_UG;
+	
+	// Enable CH4 output, positive pol
+	TIM1->CCER |= TIM_CC4E;// | TIM_CC4P;
+	
+	// CH2 Mode is output, PWM1 (CC1S = 00, OC1M = 110)
+	TIM1->CHCTLR2 |= TIM_OC4M_2 | TIM_OC4M_1;
+	
+	// Set the Capture Compare Register value to 50% initially
+	TIM1->CH4CVR = 256;
+	
+	// Enable TIM1 outputs
+	TIM1->BDTR |= TIM_MOE;
+	
+	// Enable CH4 DMA Req
+	TIM1->DMAINTENR |= TIM_CC4DE;
+	
+	// Enable TIM1
+	TIM1->CTLR1 |= TIM_CEN;
+
+	//DMA1_Channel4 is for TIM1CH4 
+	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
+	DMA1_Channel4->PADDR = (uint32_t)&SPI1->DATAR;
+	DMA1_Channel4->MADDR = (uint32_t)spi_dac_buffer;
+	DMA1_Channel4->CNTR  = SPIDACBUFSZ;
+	DMA1_Channel4->CFGR  =
+		DMA_M2M_Disable |		 
+		DMA_Priority_VeryHigh |
+		DMA_MemoryDataSize_HalfWord |
+		DMA_PeripheralDataSize_HalfWord |
+		DMA_MemoryInc_Enable |
+		DMA_Mode_Circular |
+		DMA_DIR_PeripheralDST |
+		DMA_IT_TC | DMA_IT_HT;
+
+	NVIC_EnableIRQ( DMA1_Channel4_IRQn );
+	DMA1_Channel4->CFGR |= DMA_CFGR1_EN;
+#endif
 }
 
 /*

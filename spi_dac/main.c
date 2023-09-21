@@ -72,7 +72,15 @@ int main(void)
     {
     	Delay_Ms( 100 );
         GPIO_WriteBit(GPIOA, GPIO_Pin_0, (count & 1) ? Bit_SET : Bit_RESET);
-    	//printf("count = %d\r\n", count);
+    	printf("%6d : ", count);
+    	printf("0x%08lX ", osc_phs[0]);
+    	printf("0x%08lX ", osc_phs[1]);
+    	//printf("0x%08lX ", SPI1->CTLR1);
+    	//printf("0x%08lX ", SPI1->CTLR2);
+    	//printf("0x%08lX ", SPI1->STATR);
+    	//printf("0x%08lX ", DMA1_Channel4->MADDR);
+    	//printf("0x%08lX ", DMA1_Channel4->CNTR);
+    	printf("\n\r");
         count++;
     }
 }
