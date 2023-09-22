@@ -13,6 +13,9 @@
 // Length of the DAC DMA buffer
 #define SPIDACBUFSZ 32
 
+/* uncomment this to use WCH Peripheral API instead of direct write */
+#define WCH_PERIPH_API
+
 /* audio output buffer */
 uint16_t spi_dac_buffer[SPIDACBUFSZ];
 uint32_t osc_phs[2], osc_frq[2];
@@ -22,11 +25,6 @@ uint32_t osc_phs[2], osc_frq[2];
  */
 void spi_dac_init(void)
 {
-    GPIO_InitTypeDef GPIO_InitStructure = {0};
-	SPI_InitTypeDef SPI_InitStructure = {0};
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure = {0};
-	TIM_OCInitTypeDef TIM_OCInitStructure = {0};
-	DMA_InitTypeDef	DMA_InitStructure = {0};
 	
 	/* init two oscillators */
 	osc_phs[0] = 0;
@@ -36,29 +34,29 @@ void spi_dac_init(void)
 	
 	/* Set up spi output pins SCK and MOSI */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_7;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitTypeDef GPIO_InitStructure =
+	{
+		.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_7,
+		.GPIO_Speed = GPIO_Speed_50MHz,
+		.GPIO_Mode = GPIO_Mode_AF_PP,
+	};
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	/* GPIO A11 50MHz Push-Pull for WS from TIM1 CH4 */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 #ifdef SPI_DAC_DIAG
-	// GPIO A4 50MHz Push-Pull for diags
+	/* GPIO A4 50MHz Push-Pull for diags */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 #endif
-
-#if 1
+	
 	/* set up SPI port */
+#ifdef WCH_PERIPH_API
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
-	SPI_InitStructure =
+	SPI_InitTypeDef SPI_InitStructure =
 	(SPI_InitTypeDef){
 		.SPI_Direction = SPI_Direction_1Line_Tx,
 		.SPI_Mode = SPI_Mode_Master,
@@ -66,39 +64,38 @@ void spi_dac_init(void)
 		.SPI_CPOL = SPI_CPOL_Low,
 		.SPI_CPHA = SPI_CPHA_1Edge,
 		.SPI_NSS = SPI_NSS_Soft,
-		.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16,
+		.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64,
 		.SPI_FirstBit = SPI_FirstBit_MSB,
 	};
 	SPI_Init(SPI1, &SPI_InitStructure);
 	SPI_Cmd(SPI1, ENABLE);
 #else
-	// Configure SPI 
 	RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
 	SPI1->CTLR1 = 
 		SPI_NSS_Soft | SPI_CPHA_1Edge | SPI_CPOL_Low | SPI_DataSize_16b |
 		SPI_Mode_Master | SPI_Direction_1Line_Tx |
-		SPI_BaudRatePrescaler_16;
+		SPI_BaudRatePrescaler_64;
 
 	// enable SPI port
 	SPI1->CTLR1 |= SPI_CTLR1_SPE;
 #endif
 
-#if 1
 	/* set up TIM1 as timebase for WS and SPI TX */
+#ifdef WCH_PERIPH_API
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
-	TIM_TimeBaseInitStructure =
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure =
 	(TIM_TimeBaseInitTypeDef){
-		.TIM_Prescaler = 3,		// for 144MHz -> 48MHz
+		.TIM_Prescaler = 2,		// for 144MHz -> 48MHz
 		.TIM_CounterMode = TIM_CounterMode_Up,
 		.TIM_Period = 499,
 		.TIM_ClockDivision = TIM_CKD_DIV1,
 		.TIM_RepetitionCounter = 0,
 	};
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);
-	//TIM_GenerateEvent(TIM1, TIM_EventSource_Update); // redundant
 	TIM_CounterModeConfig(TIM1, TIM_CounterMode_CenterAligned3);
 	
 	/* Chl 4 is WS output 50% PWM */
+	TIM_OCInitTypeDef TIM_OCInitStructure = {0};
 	TIM_OCInitStructure =
 	(TIM_OCInitTypeDef){
 		.TIM_OCMode = TIM_OCMode_PWM1,
@@ -116,8 +113,6 @@ void spi_dac_init(void)
 	TIM_DMACmd(TIM1, TIM_DMA_CC4, ENABLE);
 	TIM_Cmd(TIM1, ENABLE);
 #else
-	// TIM1 generates DMA Req and external signal
-	// Enable TIM1
 	RCC->APB2PCENR |= RCC_APB2Periph_TIM1;
 	
 	// Reset TIM1 to init all regs
@@ -130,7 +125,7 @@ void spi_dac_init(void)
 	// SMCFGR: default clk input is CK_INT
 	
 	// Prescaler 
-	TIM1->PSC = 0x0000;
+	TIM1->PSC = 0x0002;
 	
 	// Auto Reload - sets period to ~47kHz
 	TIM1->ATRLR = 499;
@@ -157,10 +152,10 @@ void spi_dac_init(void)
 	TIM1->CTLR1 |= TIM_CEN;
 #endif
 	
-#if 1
 	/* set up DMA */
+#ifdef WCH_PERIPH_API
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
-	DMA_InitStructure = 
+	DMA_InitTypeDef DMA_InitStructure = 
 	(DMA_InitTypeDef){
 		.DMA_PeripheralBaseAddr = (uint32_t)&SPI1->DATAR,
 		.DMA_MemoryBaseAddr = (uint32_t)spi_dac_buffer,
@@ -183,7 +178,6 @@ void spi_dac_init(void)
 	/* Start it all up */
 	DMA_Cmd(DMA1_Channel4, ENABLE);
 #else
-	//DMA1_Channel4 is for TIM1CH4 
 	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
 	DMA1_Channel4->PADDR = (uint32_t)&SPI1->DATAR;
 	DMA1_Channel4->MADDR = (uint32_t)spi_dac_buffer;
