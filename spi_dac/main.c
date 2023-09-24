@@ -18,7 +18,8 @@
 
 */
 
-#include "debug.h"
+#include "uart_printf.h"
+#include "systick.h"
 #include "spi_dac.h"
 
 /* Global typedef */
@@ -57,7 +58,7 @@ int main(void)
 	int count = 0;
 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-    Delay_Init();
+    systick_init(1000);
     USART_Printf_Init(115200);
     printf("\r\nSPI DAC example\r\n");
     printf("SystemClk:%lud\r\n", SystemCoreClock);
@@ -75,6 +76,7 @@ int main(void)
     	printf("%6d : ", count);
     	printf("0x%08lX ", osc_phs[0]);
     	printf("0x%08lX ", osc_phs[1]);
+    	printf("0x%08lX ", systick_cnt);
     	//printf("0x%08lX ", SPI1->CTLR1);
     	//printf("0x%08lX ", SPI1->CTLR2);
     	//printf("0x%08lX ", SPI1->STATR);

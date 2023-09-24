@@ -74,13 +74,23 @@ int main(void)
 	SPI2->I2SCFGR = SPI_I2SCFGR_I2SMOD;
 	printf("I2SCFGR = 0x%08X\n\r", SPI2->I2SCFGR);
 #else
-	/* test if writing SPI2 reg works */
+#if 0
+/* test if writing SPI2 reg works */
 #define SPI2REG I2SCFGR
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
 	printf("SPI2REG = 0x%08X\n\r", SPI2->SPI2REG);
 	printf("Write SPI2REG\n\r");
 	SPI2->SPI2REG = 0xDEADBEEF;
 	printf("SPI2REG = 0x%08X\n\r", SPI2->SPI2REG);
+#else
+/* test if writing SPI2 reg works */
+#define SPI1REG I2SPR
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+	printf("SPI1REG = 0x%08X\n\r", SPI1->SPI1REG);
+	printf("Write SPI2REG\n\r");
+	SPI1->SPI1REG = 0xDEADBEEF;
+	printf("SPI1REG = 0x%08X\n\r", SPI1->SPI1REG);
+#endif
 #endif
 
 	printf("Done\n\r");
